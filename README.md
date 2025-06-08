@@ -5,7 +5,7 @@ Python interfrace for DVD drives
 
 This project is intended to be an educational tool showing Python users how to control LG/Hitachi GDR-8164B drives over USB on Linux systems. Users can explore basic IO operations as well as Linear Feedback Shift Registers (LFSRs) and Cyclical Redundancy Checks (CRCs). Windows support may be added in the future, but beware that Windows 11 may not support all features given that these are very old IDE drives.
 
-Note: This code favors readability over speed given that it is intended as an educational tool. You can likely find faster alternatives elsewhere. 
+Given its intent as an educational tool, this code favors readability over speed. You can likely find faster alternatives elsewhere. 
 
 # Requirements
 
