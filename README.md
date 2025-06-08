@@ -3,7 +3,7 @@ Python interfrace for DVD drives
 
 # Goal
 
-The goal of this project is to provide a python interface for controlling LG/Hitachi GDR-8164B drives over USB on Linux systems. Windows support may be added in the future but beware that Windows 11 may not support all features given that these are very old IDE drives.
+This project is intended to be an educational tool showing Python users how to control LG/Hitachi GDR-8164B drives over USB on Linux systems. Users can explore basic IO operations as well the behavior of Linear Feedback Shift Registers (LFSRs) and Cyclical Redudnacy Checks (CRCs). Windows support may be added in the future but beware that Windows 11 may not support all features given that these are very old IDE drives.
 
 # Requirements
 
