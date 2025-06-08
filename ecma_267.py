@@ -1,6 +1,6 @@
 # Copyright (C) 2025     Josh Wood
 # 
-# Very closely based on the unscrambler project
+# This portion is very closely based on the unscrambler project
 # written by:
 #              Victor Muñoz (xt5@ingenieria-inversa.cl)
 #              https://github.com/saramibreak/unscrambler
@@ -54,7 +54,7 @@ table = [
     0x00000AA0, 0x80000AB1, 0x80000A93, 0x00000A82, 0x80000AD7, 0x00000AC6, 0x00000AE4, 0x80000AF5,
     0x80000A5F, 0x00000A4E, 0x00000A6C, 0x80000A7D, 0x00000A28, 0x80000A39, 0x80000A1B, 0x00000A0A]
 
-def calc_edc(data):
+def calc_edc(data: bytes):
     """Calculate the Error Detector Code (EDC) value for data bytes.
 
     Notes:

@@ -1,6 +1,6 @@
 # Copyright (C) 2025     Josh Wood
 # 
-# Very closely based on the unscrambler project
+# This portion is very closely based on the unscrambler project
 # written by:
 #              Victor Muñoz (xt5@ingenieria-inversa.cl)
 #              https://github.com/saramibreak/unscrambler
@@ -19,13 +19,24 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+def generate_cypher(seed: int, length: int):
+    """Generates the cypher used to decode raw DVD data.
 
-# LSFR = Linear Shift Feedback Register
+    Note:
+        Cypher generation is implemented as a 15 bit
+        Linear Feedback Shift Register (LFSR) with
+        bits 10 and 14 as taps. See:
 
-# 15 bit LSFR with bits 10 and 14 as taps (probably equivalent to polynomial?)
+        [1] https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+        [2] https://hitmen.c02.at/files/docs/gc/Ingenieria-Inversa-Understanding_WII_Gamecube_Optical_Disks.html
 
-def generate_cypher(seed, length):
+    Args:
+        seed (int): seed value for the cypher construction
+        length (int): desired length of the cypher in bytes
 
+    Returns:
+        (bytearray)
+    """
     # initialize the shift register
     lfsr = seed
 
