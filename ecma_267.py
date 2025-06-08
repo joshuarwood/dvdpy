@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+# table of pre-computed 32 bit CRC results of all possible bytes 0-255 using polynomial 0x80000011
 table = [
     0x00000000, 0x80000011, 0x80000033, 0x00000022, 0x80000077, 0x00000066, 0x00000044, 0x80000055,
     0x800000FF, 0x000000EE, 0x000000CC, 0x800000DD, 0x00000088, 0x80000099, 0x800000BB, 0x000000AA,
@@ -57,7 +58,7 @@ def calc_edc(data):
     """Calculate the Error Detector Code (EDC) value for data bytes.
 
     Notes:
-       Implemented as a 32 bit Cyclical Redundancy Check (CRC).
+       This is implemented as a 32 bit Cyclical Redundancy Check (CRC).
        Polynomial is x^32 + x^31 + x^4 + 1 = 0x80000011 ("normal" implementation).
        https://ecma-international.org/wp-content/uploads/ECMA-267_2nd_edition_december_1999.pdf
 
@@ -68,7 +69,6 @@ def calc_edc(data):
         (int)
     """
     crc = 0x00000000 # ecma-267 standard initializes to 0
-
     for by in data:
         crc = (crc << 8) ^ (table[((crc >> 24)  ^ by) & 0xFF])
         crc &= 0xFFFFFFFF
