@@ -3,7 +3,9 @@ Python interfrace for DVD drives
 
 # Goal
 
-This project is intended to be an educational tool showing Python users how to control LG/Hitachi GDR-8164B drives over USB on Linux systems. Users can explore basic IO operations as well as Linear Feedback Shift Registers (LFSRs) and Cyclical Redundancy Checks (CRCs). Windows support may be added in the future but beware that Windows 11 may not support all features given that these are very old IDE drives.
+This project is intended to be an educational tool showing Python users how to control LG/Hitachi GDR-8164B drives over USB on Linux systems. Users can explore basic IO operations as well as Linear Feedback Shift Registers (LFSRs) and Cyclical Redundancy Checks (CRCs). Windows support may be added in the future, but beware that Windows 11 may not support all features given that these are very old IDE drives.
+
+Note: This code favors readability over speed given that it is intended as an educational tool. You can likely find faster alternatives elsewhere. 
 
 # Requirements
 
@@ -14,5 +16,5 @@ This project is intended to be an educational tool showing Python users how to c
 
 # Credits
 
-* the author of the old [friidump](https://github.com/bradenmcd/friidump) project
+* the author of the [friidump](https://github.com/bradenmcd/friidump) project
 * the authors of the [unscrambler](https://github.com/saramibreak/unscrambler) project for providing a clear explanation of how to decypher raw DVD data
