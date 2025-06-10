@@ -33,7 +33,7 @@
 u_int8_t SPC_INQUIRY = 0x12;
 u_int8_t MMC_READ_12 = 0xA8;
 
-int dvd_execute_cmd(int fd, unsigned char *cmd, unsigned char *buffer,
+int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
 		    int buflen, int timeout, bool verbose) {
 
     struct cdrom_generic_command cgc;
@@ -64,7 +64,7 @@ int dvd_execute_cmd(int fd, unsigned char *cmd, unsigned char *buffer,
     return status;    
 };
 
-static PyObject *dvd_info(PyObject *self, PyObject *args) {
+static PyObject *drive_info(PyObject *self, PyObject *args) {
 
     int fd = open("/dev/sr0", O_RDONLY | O_NONBLOCK);
 
@@ -72,7 +72,7 @@ static PyObject *dvd_info(PyObject *self, PyObject *args) {
     unsigned char cmd[12] = {
         SPC_INQUIRY, 0, 0, 0, sizeof(buffer), 0, 0, 0, 0, 0, 0, 0};
 
-    int status = dvd_execute_cmd(fd, cmd, buffer, 36, 10, false);
+    int status = execute_command(fd, cmd, buffer, 36, 10, false);
     if (status >= 0) {
         char *vendor = strndup((char *)&buffer[8], 8);
 	char *prod_id = strndup((char *)&buffer[16], 16);
@@ -86,7 +86,7 @@ static PyObject *dvd_info(PyObject *self, PyObject *args) {
 };
 
 static PyMethodDef Methods[] = {
-    {"dvd_info",  dvd_info, METH_VARARGS, "Get the DVD drive info."},
+    {"drive_info",  drive_info, METH_VARARGS, "Get the DVD drive info."},
     {NULL, NULL, 0, NULL}
 };
 
