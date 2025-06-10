@@ -46,14 +46,3 @@ if __name__ == "__main__":
         description="Command line interface for DVD operations")
 
     args = parser.parse_args()
-
-"""
-        mmc_command mmc;
-        int out;
-        u_int8_t buf[36];
-
-        dvd_init_command (&mmc, buf, sizeof (buf), NULL);
-        mmc.cmd[0] = SPC_INQUIRY;
-        mmc.cmd[4] = sizeof (buf);
-        if ((out = dvd_execute_cmd (fd, &mmc, false)) >= 0) {
-"""
