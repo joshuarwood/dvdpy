@@ -1,7 +1,6 @@
 # Copyright (C) 2025     Josh Wood
 # 
-# This portion is closely based on the friidump project
-# written by:
+# This portion is based on the friidump project written by:
 #              Arep
 #              https://github.com/bradenmcd/friidump
 #

@@ -1,8 +1,7 @@
 /*
  * Copyright (C) 2025     Josh Wood
  *
- * This portion is very closely based on the friidump project
- * written by:
+ * This portion is based on the friidump project written by:
  *              Arep
  *              https://github.com/bradenmcd/friidump
  *
@@ -35,7 +34,20 @@ u_int8_t MMC_READ_12 = 0xA8;
 
 int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
 		    int buflen, int timeout, bool verbose) {
-
+    /* Sends a command to the DVD drive
+     *
+     * Args:
+     *     fd (int): the file descriptor of the drive
+     *     cmd (unsigned char *): pointer to the 12 command bytes
+     *     buffer (unsigned char *): pointer to the buffer where bytes
+     *                               returned by the command are placed
+     *     buflen (int): length of the buffer
+     *     timeout (int): timeout duration in integer seconds
+     *     verbose (bool): set to true to print more details to stdout
+     *
+     * Returns:
+     *     (int): the command status where -1 indicates an error
+     */
     struct cdrom_generic_command cgc;
     struct request_sense sense;
 
@@ -65,7 +77,14 @@ int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
 };
 
 static PyObject *drive_info(PyObject *self, PyObject *args) {
-
+    /* Retrieve the drive vendor, product ID, revision
+     *
+     * Args:
+     *     fd (int): the file descriptor of the drive
+     *
+     * Returns:
+     *     (str): string containing the drive info
+     */
     int fd;
     if (!PyArg_ParseTuple(args, "i", &fd))
         return NULL;
@@ -86,7 +105,14 @@ static PyObject *drive_info(PyObject *self, PyObject *args) {
 };
 
 static PyObject *open_device(PyObject *self, PyObject *args) {
-
+    /* Method to open the device's file descriptor
+     *
+     * Args:
+     *     path (str): path to the device
+     *
+     * Returns:
+     *     (int): the file descriptor
+     */
     const char *path;
     if (!PyArg_ParseTuple(args, "s", &path))
         return NULL;
@@ -97,7 +123,14 @@ static PyObject *open_device(PyObject *self, PyObject *args) {
 };
 
 static PyObject *close_device(PyObject *self, PyObject *args) {
-
+    /* Method to close the device's file descriptor
+     *
+     * Args:
+     *     fd (int): the file descriptor to close
+     *
+     * Returns:
+     *     (int): status reported by close()
+     */
     int fd;
     if (!PyArg_ParseTuple(args, "i", &fd))
         return NULL;
@@ -105,6 +138,10 @@ static PyObject *close_device(PyObject *self, PyObject *args) {
     return PyLong_FromLong(close(fd));
 };
 
+/*
+ * Descriptions for the methods available in this module.
+ * These can be accessed within Python using `dir(dvdpy)`
+ */
 static PyMethodDef Methods[] = {
     {"open_device",   open_device, METH_VARARGS, "Open the path to a DVD drive."},
     {"close_device", close_device, METH_VARARGS, "Close the path to a DVD drive."},
@@ -112,6 +149,10 @@ static PyMethodDef Methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+/*
+ * Define the dvdpy module name so that Python users
+ * can import it with `import dvdpy`
+ */
 static struct PyModuleDef module = {PyModuleDef_HEAD_INIT, "dvdpy", NULL, -1, Methods};
 
 PyMODINIT_FUNC PyInit_dvdpy(void)
