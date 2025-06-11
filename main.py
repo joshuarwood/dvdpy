@@ -20,6 +20,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
+import dvdpy
 import argparse
 
 def welcome():
@@ -44,5 +45,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         "python3 " + os.path.basename(__file__),
         description="Command line interface for DVD operations")
-
+    parser.add_argument("-d", "--device", default="/dev/sr0", help="Path to DVD drive (default /dev/sr0)")
     args = parser.parse_args()
+
+    fd = dvdpy.open_device("/dev/sr0")
+    dvdpy.drive_info(fd)
+    dvdpy.close_device(fd)

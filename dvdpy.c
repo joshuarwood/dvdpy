@@ -66,7 +66,9 @@ int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
 
 static PyObject *drive_info(PyObject *self, PyObject *args) {
 
-    int fd = open("/dev/sr0", O_RDONLY | O_NONBLOCK);
+    int fd;
+    if (!PyArg_ParseTuple(args, "i", &fd))
+        return NULL;
 
     unsigned char buffer[36];
     unsigned char cmd[12] = {
@@ -80,13 +82,33 @@ static PyObject *drive_info(PyObject *self, PyObject *args) {
 	printf("DVD drive is \"%s/%s/%s\"\n", vendor, prod_id, prod_rev);
     } else printf("Cannot identify DVD drive\n");
 
-    close(fd);
-
     return PyLong_FromLong(status);
 };
 
+static PyObject *open_device(PyObject *self, PyObject *args) {
+
+    const char *path;
+    if (!PyArg_ParseTuple(args, "s", &path))
+        return NULL;
+
+    int fd = open(path, O_RDONLY | O_NONBLOCK);
+
+    return PyLong_FromLong(fd);
+};
+
+static PyObject *close_device(PyObject *self, PyObject *args) {
+
+    int fd;
+    if (!PyArg_ParseTuple(args, "i", &fd))
+        return NULL;
+
+    return PyLong_FromLong(close(fd));
+};
+
 static PyMethodDef Methods[] = {
-    {"drive_info",  drive_info, METH_VARARGS, "Get the DVD drive info."},
+    {"open_device",   open_device, METH_VARARGS, "Open the path to a DVD drive."},
+    {"close_device", close_device, METH_VARARGS, "Close the path to a DVD drive."},
+    {"drive_info",     drive_info, METH_VARARGS, "Get the DVD drive info."},
     {NULL, NULL, 0, NULL}
 };
 
