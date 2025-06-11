@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
+import time
 import dvdpy
 import argparse
 
@@ -49,4 +50,7 @@ if __name__ == "__main__":
 
     fd = dvdpy.open_device("/dev/sr0")
     dvdpy.drive_info(fd)
+    dvdpy.cache_sector(fd, 0)
+    print(50 * "=")
+    dvdpy.read_cache(fd, 0, 16 * 2064)
     dvdpy.close_device(fd)
