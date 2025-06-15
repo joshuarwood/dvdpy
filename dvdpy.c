@@ -37,8 +37,8 @@ u_int32_t HITACHI_MEM_BASE = 0x80000000;
 u_int32_t HITACHI_CACHE_SIZE = 80;
 
 int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
-		    int buflen, int timeout, bool verbose) {
-    /* Sends a command to the DVD drive
+                    int buflen, int timeout, bool verbose) {
+    /* Sends a command to the DVD drive using Linux API
      *
      * Args:
      *     fd (int): the file descriptor of the drive
@@ -65,9 +65,10 @@ int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
     cgc.data_direction = CGC_DATA_READ;
     cgc.timeout = timeout * 1000;
 
+    verbose = true;
     if (verbose) {
         printf("Executing MMC command: ");
-        for (int i=0; i<12; i++) printf(" %02x", cgc.cmd[i]);
+        for (int i=0; i<6; i++) printf(" %02x%02x", cgc.cmd[2*i], cgc.cmd[2*i+1]);
         printf("\n");
     }
 
@@ -80,96 +81,37 @@ int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
     return status;    
 };
 
-static PyObject *drive_info(PyObject *self, PyObject *args) {
-    /* Retrieve the drive vendor, product ID, revision
+static PyObject *parse_and_execute(PyObject *self, PyObject *args) {
+    /* Parses Python args and executes a DVD drive command
+     *
+     * Note: the buffer argument contains a pointer to
+     * the buffer contents, which will be modified when
+     * running this command so that the user can access
+     * the updated buffer within Python.
      *
      * Args:
      *     fd (int): the file descriptor of the drive
+     *     cmd (bytearray): pointer to the 12 command bytes
+     *     buffer (bytearray): pointer to the buffer where bytes
+     *                         returned by the command are placed
+     *     timeout (int): timeout duration in integer seconds
+     *     verbose (bool): set to true to print more details to stdout
      *
      * Returns:
-     *     (str): string containing the drive info
+     *     (int): the command status where -1 indicates an error
      */
-    int fd;
-    if (!PyArg_ParseTuple(args, "i", &fd))
+    int fd, timeout, verbose;
+    Py_buffer cmd, buffer;
+    if (!PyArg_ParseTuple(args, "iy*y*ip", &fd, &cmd, &buffer, &timeout, &verbose))
         return NULL;
 
-    const int buflen = 36;
-    unsigned char buffer[buflen];
-    unsigned char cmd[12] = {
-        SPC_INQUIRY, 0, 0, 0, sizeof(buffer), 0, 0, 0, 0, 0, 0, 0};
-
-    int status = execute_command(fd, cmd, buffer, buflen, 1, false);
-    if (status >= 0) {
-        char *vendor = strndup((char *)&buffer[8], 8);
-	char *prod_id = strndup((char *)&buffer[16], 16);
-	char *prod_rev = strndup((char *)&buffer[32], 4);
-	printf("DVD drive is \"%s/%s/%s\"\n", vendor, prod_id, prod_rev);
-    } else printf("Cannot identify DVD drive\n");
-
-    return PyLong_FromLong(status);
-};
-
-static PyObject *cache_sector(PyObject *self, PyObject *args) {
-
-    int fd, sector;
-    if (!PyArg_ParseTuple(args, "ii", &fd, &sector))
-        return NULL;
-
-    const int buflen = 2064 * 8;
-    unsigned char buffer[buflen];
-    unsigned char cmd[12] = {
-        MMC_READ_12, 0,
-        (u_int8_t) ((sector & 0xFF000000) >> 24), // sector MSB
-        (u_int8_t) ((sector & 0x00FF0000) >> 16),
-        (u_int8_t) ((sector & 0x0000FF00) >> 8),
-        (u_int8_t)  (sector & 0x000000FF),        // sector LSB
-        0, 0, 0, 0x10, 0x80}; // note: 0x80 enables streaming
-
-    int status = execute_command(fd, cmd, buffer, buflen, 1, false);
-
-    for (int i=0; i<8; i++) {
-        for (int j=0; j<10; j++)
-	    printf(" %02x", buffer[2064 * i + j]);
-	printf("\n");
-    }
-    return PyLong_FromLong(status);
-};
-
-static PyObject *read_cache(PyObject *self, PyObject *args) {
-
-    int fd;
-    u_int32_t offset, block_size;
-    if (!PyArg_ParseTuple(args, "iii", &fd, &offset, &block_size))
-        return NULL;
-
-    if (!block_size || block_size > 65535)
-	printf("invalid block_size (valid: 1 - 65535)\n");
-
-    u_int32_t address = HITACHI_MEM_BASE + offset;
-
-    unsigned char buffer[65536];
-    unsigned char cmd[12] = {
-        0xE7, // vendor specific command (discovered by DaveX)
-        0x48, // H
-        0x49, // I
-        0x54, // T
-        0x01, // read MCU memory sub-command
-        (unsigned char) ((address & 0xFF000000) >> 24), // address MSB
-        (unsigned char) ((address & 0x00FF0000) >> 16), // address
-        (unsigned char) ((address & 0x0000FF00) >> 8),  // address
-        (unsigned char)  (address & 0x000000FF),        // address LSB
-        (unsigned char) ((block_size & 0xFF00) >> 8),   // length MSB
-        (unsigned char)  (block_size & 0x00FF)};        // length LSB
-
-    int status = execute_command(fd, cmd, buffer, block_size, 1, false);
-
-    for (int i=0; i<16; i++) {
-        for (int j=0; j<10; j++)
-	    printf(" %02x", buffer[2064 * i + j]);
-	printf("\n");
+    if (cmd.len != 12) {
+        PyErr_SetString(PyExc_ValueError, "command length must be 12 bytes");
+        return (PyObject *) NULL;
     }
 
-    //int status = 0;
+    int status = execute_command(fd, (unsigned char *)cmd.buf, (unsigned char *)buffer.buf, buffer.len, timeout, (bool)verbose);
+
     return PyLong_FromLong(status);
 };
 
@@ -212,11 +154,9 @@ static PyObject *close_device(PyObject *self, PyObject *args) {
  * These can be accessed within Python using `dir(dvdpy)`
  */
 static PyMethodDef Methods[] = {
-    {"open_device",   open_device, METH_VARARGS, "Open the path to a DVD drive."},
-    {"close_device", close_device, METH_VARARGS, "Close the path to a DVD drive."},
-    {"drive_info",     drive_info, METH_VARARGS, "Get the DVD drive info."},
-    {"cache_sector",   cache_sector, METH_VARARGS, "Cache data starting at sector."},
-    {"read_cache",     read_cache, METH_VARARGS, "Read from drive cache."},
+    {"open_device",             open_device, METH_VARARGS, "Open the path to a DVD drive."},
+    {"close_device",           close_device, METH_VARARGS, "Close the path to a DVD drive."},
+    {"parse_and_execute", parse_and_execute, METH_VARARGS, "Parse and execute a DVD drive command."},
     {NULL, NULL, 0, NULL}
 };
 
