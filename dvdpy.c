@@ -81,8 +81,8 @@ int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
     return status;    
 };
 
-static PyObject *parse_and_execute(PyObject *self, PyObject *args) {
-    /* Parses Python args and executes a DVD drive command
+static PyObject *command_device(PyObject *self, PyObject *args) {
+    /* Python interface for commanding a DVD device.
      *
      * Note: the buffer argument contains a pointer to
      * the buffer contents, which will be modified when
@@ -116,7 +116,7 @@ static PyObject *parse_and_execute(PyObject *self, PyObject *args) {
 };
 
 static PyObject *open_device(PyObject *self, PyObject *args) {
-    /* Method to open the device's file descriptor
+    /* Method to open the device's file descriptor.
      *
      * Args:
      *     path (str): path to the device
@@ -134,7 +134,7 @@ static PyObject *open_device(PyObject *self, PyObject *args) {
 };
 
 static PyObject *close_device(PyObject *self, PyObject *args) {
-    /* Method to close the device's file descriptor
+    /* Method to close the device's file descriptor.
      *
      * Args:
      *     fd (int): the file descriptor to close
@@ -154,9 +154,9 @@ static PyObject *close_device(PyObject *self, PyObject *args) {
  * These can be accessed within Python using `dir(dvdpy)`
  */
 static PyMethodDef Methods[] = {
-    {"open_device",             open_device, METH_VARARGS, "Open the path to a DVD drive."},
-    {"close_device",           close_device, METH_VARARGS, "Close the path to a DVD drive."},
-    {"parse_and_execute", parse_and_execute, METH_VARARGS, "Parse and execute a DVD drive command."},
+    {"open_device",       open_device, METH_VARARGS, "Open the path to a DVD drive."},
+    {"close_device",     close_device, METH_VARARGS, "Close the path to a DVD drive."},
+    {"command_device", command_device, METH_VARARGS, "Send byte command to a DVD drive."},
     {NULL, NULL, 0, NULL}
 };
 

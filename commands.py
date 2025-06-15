@@ -10,7 +10,7 @@ def drive_info(fd: int):
     cmd = bytearray([
         SPC_INQUIRY, 0, 0, 0, len(buffer), 0, 0, 0, 0, 0, 0, 0])
 
-    dvdpy.parse_and_execute(fd, cmd, buffer, 1, True)
+    dvdpy.command_device(fd, cmd, buffer, 1, True)
 
     vendor = buffer[8:16].decode("utf-8")
     prod_id = buffer[16:32].decode("utf-8")
