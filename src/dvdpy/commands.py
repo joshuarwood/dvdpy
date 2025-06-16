@@ -26,6 +26,8 @@ SECTOR_SIZE = 2048
 RAW_SECTOR_SIZE = 2064
 SECTORS_PER_BLOCK = 16
 
+HITACHI_MEM_BASE = 0x80000000
+
 from . import cextension
 
 def drive_info(fd: int, timeout: int = 1, verbose: bool = False):
@@ -77,7 +79,7 @@ def drive_spin(fd: int, state: bool, timeout: int = 1, verbose: bool = False):
 
     return cextension.command_device(fd, cmd, buffer, timeout, verbose)
 
-def read_sectors(fd: int, sector: int, sectors: int = SECTORS_PER_BLOCK,
+def read_sectors(fd: int, sector: int, sectors: int = SECTORS_PER_BLOCK, # NOTE: this really should be cache_sectors()
                  streaming: bool = False, timeout: int = 1, verbose: bool = False):
     """ Write sectors to the drive cache
 
@@ -93,8 +95,7 @@ def read_sectors(fd: int, sector: int, sectors: int = SECTORS_PER_BLOCK,
         (int): command status (-1 means fail)
     """
     cmd = bytearray(12)
-    buffer = bytearray(SECTORS_PER_BLOCK * RAW_SECTOR_SIZE)
-    sectors = SECTORS_PER_BLOCK
+    buffer = bytearray(sectors * RAW_SECTOR_SIZE)
 
     cmd[0] = MMC_READ_12
     cmd[1] = 0 if streaming else 0x08 # Force Unit Access bit
@@ -107,5 +108,46 @@ def read_sectors(fd: int, sector: int, sectors: int = SECTORS_PER_BLOCK,
     cmd[8] = (sectors & 0x0000FF00) >> 8
     cmd[9] = (sectors & 0x000000FF)       # sectors LSB
     cmd[10] = 0x80 if streaming else 0    # streaming bit
+
+    return cextension.command_device(fd, cmd, buffer, timeout, verbose)
+
+def read_cache(fd: int, offset: int, block_size: int = SECTORS_PER_BLOCK,
+               timeout: int = 1, verbose: bool = False):
+    """ Write sectors to the drive cache
+
+    Args:
+        fd (int): file descriptor
+        offset (int): starting memory offset within cache
+        block_size (int, optional): memory block size to read
+        streaming (int, optional): use streaming mode when True (default: False)
+        timeout (int, optional): command timeout in seconds (default: 1)
+        verbose (bool, optional): set to True to print more info (default: False)
+
+    Returns:
+        (int): command status (-1 means fail)
+    """
+    cmd = bytearray(12)
+    buffer = bytearray(block_size * RAW_SECTOR_SIZE)
+    address = HITACHI_MEM_BASE + offset;
+
+    if block_size <= 0 or block_size > 65535:
+	    raise ValueError("invalid block_size (valid: 1 - 65535)")
+
+    cmd[0] = 0xE7 # vendor specific command (discovered by DaveX)
+    cmd[1] = 0x48 # H
+    cmd[2] = 0x49 # I
+    cmd[3] = 0x54 # T
+    cmd[4] = 0x01 # read MCU memory sub-command
+    cmd[6] =     (address & 0xFF000000) >> 24 # address MSB
+    cmd[7] =     (address & 0x00FF0000) >> 16
+    cmd[8] =     (address & 0x0000FF00) >> 8
+    cmd[9] =     (address & 0x000000FF)       # address LSB
+    cmd[10] = (block_size & 0xFF00) >> 8      # block_size MSB
+    cmd[11] = (block_size & 0x00FF)           # block_size LSB
+
+    for i in range(block_size):
+        for j in range(10):
+            print(" %02x" % buffer[i * RAW_SECTOR_SIZE + j], end='')
+        print("")
 
     return cextension.command_device(fd, cmd, buffer, timeout, verbose)

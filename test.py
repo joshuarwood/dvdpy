@@ -13,3 +13,4 @@ dvdpy.commands.read_sectors(drive.fd, 2295012, verbose=True) # replaces read_dum
 
 dvdpy.commands.read_sectors(drive.fd, 80, streaming=True, verbose=True)
 dvdpy.commands.read_sectors(drive.fd, 0, streaming=True, verbose=True)
+dvdpy.commands.read_cache(drive.fd, 0, 12, verbose=True)
