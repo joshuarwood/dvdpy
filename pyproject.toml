@@ -4,15 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dvdpy"
-version = "0.2"
+dynamic = ["version"]
 readme = "README.md"
 license = "GPL-2.0-or-later"
 license-files = ["LICENSE"]
 
 [tool.setuptools]
-ext-modules = [
-    {name = "dvdpy.cextension", sources = ["src/dvdpy/cextension.c"]}
-]
+ext-modules = [{name = "dvdpy.cextension", sources = ["src/dvdpy/cextension.c"]}]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.dynamic]
+version = {attr = "dvdpy.__version__"}

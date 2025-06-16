@@ -164,9 +164,9 @@ static PyMethodDef Methods[] = {
  * Define the dvdpy module name so that Python users
  * can import it with `import dvdpy.cextension`
  */
-static struct PyModuleDef module = {PyModuleDef_HEAD_INIT, "dvdpy.cextension", NULL, -1, Methods};
+static struct PyModuleDef module = {PyModuleDef_HEAD_INIT, "cextension", NULL, -1, Methods};
 
-PyMODINIT_FUNC PyInit_dvdpy_cextension(void)
+PyMODINIT_FUNC PyInit_cextension(void)
 {
     return PyModule_Create(&module);
 };
