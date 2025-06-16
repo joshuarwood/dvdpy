@@ -10,5 +10,9 @@ license = "GPL-2.0-or-later"
 license-files = ["LICENSE"]
 
 [tool.setuptools]
-packages = {find = {include = ["cextension.c"], namespaces=false}}
-ext-modules = [{name = "cextension", sources = ["cextension.c"]}]
+ext-modules = [
+    {name = "dvdpy.cextension", sources = ["src/dvdpy/cextension.c"]}
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
