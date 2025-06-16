@@ -56,7 +56,7 @@ int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
     struct request_sense sense;
 
     memset(&cgc, 0, sizeof(cgc));
-    memset(buffer, 0, buflen);
+    memset(&sense, 0, sizeof(sense));
     memcpy(cgc.cmd, cmd, 12);
 
     cgc.buffer = buffer;
