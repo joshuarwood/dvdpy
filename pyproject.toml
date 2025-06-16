@@ -4,9 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dvdpy"
-version = "0.1"
+version = "0.2"
+readme = "README.md"
+license = "GPL-2.0-or-later"
+license-files = ["LICENSE"]
 
 [tool.setuptools]
-ext-modules = [
-  {name = "dvdpy", sources = ["dvdpy.c"]}
-]
+packages = {find = {include = ["cextension.c"], namespaces=false}}
+ext-modules = [{name = "cextension", sources = ["cextension.c"]}]

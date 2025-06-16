@@ -2,7 +2,7 @@
 SPC_INQUIRY = 0x12
 MMC_READ_12 = 0xA8
 
-import dvdpy
+import cextension
 
 def drive_info(fd: int):
 
@@ -10,7 +10,7 @@ def drive_info(fd: int):
     cmd = bytearray([
         SPC_INQUIRY, 0, 0, 0, len(buffer), 0, 0, 0, 0, 0, 0, 0])
 
-    dvdpy.command_device(fd, cmd, buffer, 1, True)
+    cextension.command_device(fd, cmd, buffer, 1, True)
 
     vendor = buffer[8:16].decode("utf-8")
     prod_id = buffer[16:32].decode("utf-8")
@@ -18,6 +18,6 @@ def drive_info(fd: int):
 
     return f"{vendor}/{prod_id}/{prod_rev}"
 
-fd = dvdpy.open_device("/dev/sr0")
+fd = cextension.open_device("/dev/sr0")
 print("Drive model........:", drive_info(fd))
-dvdpy.close_device(fd)
+cextension.close_device(fd)
