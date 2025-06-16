@@ -1,5 +1,9 @@
 
-import dvdpy
+import time
+import dvdpy.devices
 
-device = dvdpy.dvd_device("/dev/sr0")
-print(device.model_info())
+drive = dvdpy.devices.dvd("/dev/sr0")
+print(drive.model_info(True))
+drive.start()
+time.sleep(3)
+drive.stop()

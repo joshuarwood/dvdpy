@@ -17,3 +17,6 @@ where = ["src"]
 
 [tool.setuptools.dynamic]
 version = {attr = "dvdpy.__version__"}
+
+[project.urls]
+Repository = 'https://github.com/joshuarwood/dvdpy'

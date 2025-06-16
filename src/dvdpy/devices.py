@@ -18,5 +18,30 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-__version__ = "0.3.0"
+from . import commands
+from . import cextension
 
+__all__ = ['dvd']
+
+class dvd:
+    """ A class for the DVD drive interface
+
+    Parameters:
+        address (str): path to drive
+        timeout (int): command timeout in seconds
+    """
+    def __init__(self, address, timeout=1):
+        self.fd = cextension.open_device(address)
+        self.timeout = timeout
+
+    def __del__(self):
+        cextension.close_device(self.fd)
+
+    def model_info(self, verbose: bool = False):
+        return commands.drive_info(self.fd, self.timeout, verbose) 
+
+    def start(self, verbose: bool = False):
+        return commands.drive_spin(self.fd, True, self.timeout, verbose)
+
+    def stop(self, verbose: bool = False):
+        return commands.drive_spin(self.fd, False, self.timeout, verbose)
