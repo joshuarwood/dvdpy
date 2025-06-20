@@ -41,13 +41,22 @@ def drive_info(fd: int, timeout: int = 1, verbose: bool = False):
     Returns:
         (str): model string
     """
-    cmd = bytearray(12)
-    buffer = bytearray(36)
+    cmd = bytes([
+        SPC_INQUIRY, #  0. model inquiry command
+        0,           #  1. empty
+        0,           #  2. empty
+        0,           #  3. empty
+        36,          #  4. return buffer length
+        0,           #  5. empty
+        0,           #  6. empty
+        0,           #  7. empty
+        0,           #  8. empty
+        0,           #  9. empty
+        0,           # 10. empty
+        0            # 11. empty
+    ])
 
-    cmd[0] = SPC_INQUIRY
-    cmd[4] = len(buffer)
-
-    status = cextension.command_device(fd, cmd, buffer, timeout, verbose)
+    status, buffer = cextension.command_device(fd, cmd, cmd[4], timeout, verbose)
 
     vendor = buffer[8:16].decode("utf-8")
     prod_id = buffer[16:32].decode("utf-8")
@@ -71,13 +80,24 @@ def drive_spin(fd: int, state: bool, timeout: int = 1, verbose: bool = False):
     if isinstance(state, bool) == False:
         raise TypeError("Spin state must be True or False")
 
-    cmd = bytearray(12)
-    buffer = bytearray(8)
+    cmd = bytes([
+        SBC_START_STOP, #  0. start/stop command
+        0,              #  1. empty
+        0,              #  2. empty
+        0,              #  3. empty
+        int(state),     #  4. start = 1, stop = 0
+        0,              #  5. empty
+        0,              #  6. empty
+        0,              #  7. empty
+        0,              #  8. empty
+        0,              #  9. empty
+        0,              # 10. empty
+        0               # 11. empty
+    ])
 
-    cmd[0] = SBC_START_STOP
-    cmd[4] = int(state)
+    status, buffer = cextension.command_device(fd, cmd, 8, timeout, verbose)
 
-    return cextension.command_device(fd, cmd, buffer, timeout, verbose)
+    return status
 
 def read_sectors(fd: int, sector: int, sectors: int = SECTORS_PER_BLOCK,
                  streaming: bool = False, timeout: int = 1, verbose: bool = False):
@@ -96,22 +116,22 @@ def read_sectors(fd: int, sector: int, sectors: int = SECTORS_PER_BLOCK,
     Returns:
         (int, bytearray): tuple with (command status, buffer)
     """
-    cmd = bytearray(12)
-    buffer = bytearray(sectors * SECTOR_SIZE)
+    cmd = bytes([
+        MMC_READ_12,                  #  0. read command
+        0 if streaming else 0x08,     #  1. force unit access bit
+        (sector & 0xFF000000) >> 24,  #  2. sector MSB
+        (sector & 0x00FF0000) >> 16,  #  3. sector continued
+        (sector & 0x0000FF00) >> 8,   #  4. sector continued
+        (sector & 0x000000FF),        #  5. sector LSB
+        (sectors & 0xFF000000) >> 24, #  6. sectors MSB
+        (sectors & 0x00FF0000) >> 16, #  7. sectors continued
+        (sectors & 0x0000FF00) >> 8,  #  8. sectors continued
+        (sectors & 0x000000FF),       #  9. sectors LSB
+        0x80 if streaming else 0,     # 10. streaming bit
+        0                             # 11. empty
+    ])
 
-    cmd[0] = MMC_READ_12
-    cmd[1] = 0 if streaming else 0x08 # Force Unit Access bit
-    cmd[2] =  (sector & 0xFF000000) >> 24 # sector MSB
-    cmd[3] =  (sector & 0x00FF0000) >> 16
-    cmd[4] =  (sector & 0x0000FF00) >> 8
-    cmd[5] =  (sector & 0x000000FF)       # sector LSB
-    cmd[6] = (sectors & 0xFF000000) >> 24 # sectors MSB
-    cmd[7] = (sectors & 0x00FF0000) >> 16
-    cmd[8] = (sectors & 0x0000FF00) >> 8
-    cmd[9] = (sectors & 0x000000FF)       # sectors LSB
-    cmd[10] = 0x80 if streaming else 0    # streaming bit
-
-    return cextension.command_device(fd, cmd, buffer, timeout, verbose), buffer
+    return cextension.command_device(fd, cmd, sectors * SECTOR_SIZE, timeout, verbose)
 
 def read_raw_bytes(fd: int, offset: int, nbyte: int = RAW_SECTOR_SIZE,
                    timeout: int = 1, verbose: bool = False):
@@ -133,23 +153,25 @@ def read_raw_bytes(fd: int, offset: int, nbyte: int = RAW_SECTOR_SIZE,
     Returns:
         (int, bytearray): tuple with (command status, buffer)
     """
-    cmd = bytearray(12)
-    buffer = bytearray(nbyte)
     address = HITACHI_MEM_BASE + offset;
 
     if nbyte <= 0 or nbyte > 65535:
 	    raise ValueError("invalid nbyte (valid: 1 - 65535)")
 
-    cmd[0] = 0xE7 # vendor specific command (discovered by DaveX)
-    cmd[1] = 0x48 # H
-    cmd[2] = 0x49 # I
-    cmd[3] = 0x54 # T
-    cmd[4] = 0x01 # read MCU memory sub-command
-    cmd[6] = (address & 0xFF000000) >> 24 # address MSB
-    cmd[7] = (address & 0x00FF0000) >> 16
-    cmd[8] = (address & 0x0000FF00) >> 8
-    cmd[9] = (address & 0x000000FF)       # address LSB
-    cmd[10] =  (nbyte & 0xFF00) >> 8      # block_size MSB
-    cmd[11] =  (nbyte & 0x00FF)           # block_size LSB
+    # Note: bytes 1-3 = HIT which is likely short for HITACHI
+    cmd = bytes([
+        0xE7,                         #  0. vendor specific command (discovered by DaveX)
+        0x48,                         #  1. H
+        0x49,                         #  2. I
+        0x54,                         #  3. T
+        0x01,                         #  4. read MCU memory sub-command
+        0,                            #  5. empty
+        (address & 0xFF000000) >> 24, #  6. address MSB
+        (address & 0x00FF0000) >> 16, #  7. address continued
+        (address & 0x0000FF00) >> 8,  #  8. address continued
+        (address & 0x000000FF),       #  9. address LSB
+        (nbyte & 0xFF00) >> 8,        # 10. nbyte MSB
+        (nbyte & 0x00FF)              # 11. nbyte LSB
+    ])
 
-    return cextension.command_device(fd, cmd, buffer, timeout, verbose), buffer
+    return cextension.command_device(fd, cmd, nbyte, timeout, verbose)

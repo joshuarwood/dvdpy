@@ -4,7 +4,9 @@ import dvdpy.devices
 import dvdpy.commands
 
 drive = dvdpy.devices.dvd("/dev/sr0")
+t0 = time.time()
 print(drive.model_info(True))
+print(f"took {time.time()-t0:.6f} sec")
 drive.start()
 #time.sleep(3)
 #drive.stop()

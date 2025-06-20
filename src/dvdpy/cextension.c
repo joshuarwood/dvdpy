@@ -32,9 +32,8 @@
 u_int8_t SPC_INQUIRY = 0x12;
 u_int8_t MMC_READ_12 = 0xA8;
 
-u_int32_t RAW_SECTOR_SIZE = 2064;
+u_int32_t CACHE_SIZE = 80 * 2064;
 u_int32_t HITACHI_MEM_BASE = 0x80000000;
-u_int32_t HITACHI_CACHE_SIZE = 80;
 
 int execute_command(int fd, unsigned char *cmd, unsigned char *buffer,
                     int buflen, int timeout, bool verbose) {
@@ -92,27 +91,28 @@ static PyObject *command_device(PyObject *self, PyObject *args) {
      * Args:
      *     fd (int): the file descriptor of the drive
      *     cmd (bytearray): pointer to the 12 command bytes
-     *     buffer (bytearray): pointer to the buffer where bytes
-     *                         returned by the command are placed
+     *     buflen (int): the buffer length for output buffer
      *     timeout (int): timeout duration in integer seconds
      *     verbose (bool): set to true to print more details to stdout
      *
      * Returns:
      *     (int): the command status where -1 indicates an error
      */
-    int fd, timeout, verbose;
-    Py_buffer cmd, buffer;
-    if (!PyArg_ParseTuple(args, "iy*y*ip", &fd, &cmd, &buffer, &timeout, &verbose))
+    Py_ssize_t cmdlen;
+    int fd, buflen, timeout, verbose;
+    const char *cmd;
+    char buffer[CACHE_SIZE];
+    if (!PyArg_ParseTuple(args, "iy#iip", &fd, &cmd, &cmdlen, &buflen, &timeout, &verbose))
         return NULL;
 
-    if (cmd.len != 12) {
+    if (cmdlen != 12) {
         PyErr_SetString(PyExc_ValueError, "command length must be 12 bytes");
         return (PyObject *) NULL;
     }
 
-    int status = execute_command(fd, (unsigned char *)cmd.buf, (unsigned char *)buffer.buf, buffer.len, timeout, (bool)verbose);
+    int status = execute_command(fd, (unsigned char *)cmd, (unsigned char *)buffer, buflen, timeout, (bool)verbose);
 
-    return PyLong_FromLong(status);
+    return Py_BuildValue("(OO)", PyLong_FromLong(status), PyBytes_FromStringAndSize(buffer, buflen));
 };
 
 static PyObject *open_device(PyObject *self, PyObject *args) {
